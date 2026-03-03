@@ -1,0 +1,203 @@
+.downloads-page {
+    padding: 8rem 0 6rem;
+    min-height: calc(100vh - 80px);
+    /* Adjust based on header/footer */
+}
+
+.downloads-header {
+    margin-bottom: 4rem;
+}
+
+.downloads-header .hero-title {
+    font-size: 3.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.min-h-\[60vh\] {
+    min-height: 60vh;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--card-border);
+    border-top: 4px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Error State */
+.error-state {
+    text-align: center;
+    padding: 4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.error-icon {
+    color: var(--primary);
+}
+
+/* Latest Release Card */
+.latest-release-card {
+    position: relative;
+    padding: 3rem;
+    margin-bottom: 4rem;
+    border: 2px solid rgba(233, 88, 51, 0.2);
+    /* Subtle primary border */
+}
+
+.latest-badge {
+    position: absolute;
+    top: -14px;
+    left: 3rem;
+    background: var(--primary);
+    color: white;
+    padding: 4px 16px;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(233, 88, 51, 0.3);
+}
+
+.latest-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+}
+
+.latest-info h2 {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+    word-break: break-all;
+}
+
+.meta-info {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    flex-wrap: wrap;
+}
+
+.meta-info span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.os-badge {
+    background: var(--bg-color);
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--card-border);
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+/* Previous Releases */
+.previous-releases h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.releases-list {
+    padding: 0;
+    /* Remove default padding from card */
+    overflow: hidden;
+}
+
+.release-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--card-border);
+    transition: background-color 0.2s ease;
+}
+
+.release-item:last-child {
+    border-bottom: none;
+}
+
+.release-item:hover {
+    background-color: var(--bg-color);
+}
+
+.release-file h4 {
+    font-size: 1.125rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.text-sm {
+    font-size: 0.875rem;
+}
+
+.dot-separator {
+    color: #D4D4D4;
+}
+
+.os-label {
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.rounded-btn {
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .downloads-header .hero-title {
+        font-size: 2.5rem;
+    }
+
+    .latest-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .latest-action {
+        width: 100%;
+    }
+
+    .latest-action .btn {
+        width: 100%;
+    }
+
+    .latest-badge {
+        left: 2rem;
+    }
+
+    .release-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .release-item .btn {
+        align-self: flex-start;
+    }
+}
