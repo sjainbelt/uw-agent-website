@@ -9,15 +9,15 @@ const Hero = () => {
                 <div className="hero-content">
                     <div className="badge delay-100">
                         <span className="badge-dot"></span>
-                        Version 2.0 Now Available
+                        Business Continuity Solution
                     </div>
 
                     <h1 className="hero-title delay-200">
-                        The unified <span className="text-gradient">workspace agent.</span>
+                        Instant document <span className="text-gradient">Business Continuity.</span>
                     </h1>
 
                     <p className="hero-subtitle delay-300">
-                        Manage your workspace efficiently, query all your integrated systems, and complete tasks with an active agent powered by your data.
+                        Ensure business continuity for critical documents from iManage, NetDocuments, Box, and SharePoint. Access and download your synced files anytime — even during an outage.
                     </p>
 
                     <div className="hero-actions delay-300">
@@ -34,7 +34,7 @@ const Hero = () => {
 
                 <div className="hero-visual delay-300">
                     <div className="mockup-container glass-panel">
-                        <img src="/hero-mockup.png" alt="UW-Agent Interface" className="mockup-image" />
+                        <img src="/hero-mockup.png" alt="UnderWrite Dashboard" className="mockup-image" />
                     </div>
                 </div>            </div>
         </section>

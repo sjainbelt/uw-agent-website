@@ -3,6 +3,12 @@ import { useLocation } from 'react-router-dom';
 import { Download, Calendar, HardDrive, AlertCircle } from 'lucide-react';
 import './Downloads.css';
 
+const BUCKET = 'noodle-releases-belt';
+const PREFIX = 'uw-agent/';
+
+/** Strip the folder prefix from GCS object names for display */
+const displayName = (name) => name.startsWith(PREFIX) ? name.slice(PREFIX.length) : name;
+
 const Downloads = () => {
     const [releases, setReleases] = useState(() => {
         const cached = localStorage.getItem('uw_agent_releases_cache');
@@ -19,14 +25,14 @@ const Downloads = () => {
     useEffect(() => {
         const fetchReleases = async () => {
             try {
-                const response = await fetch('https://storage.googleapis.com/storage/v1/b/uw-agent-releases-belt/o');
+                const response = await fetch(`https://storage.googleapis.com/storage/v1/b/${BUCKET}/o?prefix=${encodeURIComponent(PREFIX)}`);
                 if (!response.ok) {
                     throw new Error('Failed to fetch releases');
                 }
                 const data = await response.json();
 
                 // Filter out signatures and metadata files, keep only installers
-                const installerFiles = data.items.filter(item =>
+                const installerFiles = (data.items || []).filter(item =>
                     item.name.endsWith('.msi') ||
                     item.name.endsWith('.exe') ||
                     item.name.endsWith('.dmg') ||
@@ -68,10 +74,11 @@ const Downloads = () => {
         });
     };
 
-    const getOsFromFilename = (filename) => {
-        if (filename.endsWith('.msi') || filename.endsWith('.exe')) return 'Windows';
-        if (filename.endsWith('.dmg') || filename.endsWith('.pkg')) return 'macOS';
-        if (filename.endsWith('.AppImage')) return 'Linux';
+    const getOsFromFilename = (name) => {
+        const f = displayName(name);
+        if (f.endsWith('.msi') || f.endsWith('.exe')) return 'Windows';
+        if (f.endsWith('.dmg') || f.endsWith('.pkg')) return 'macOS';
+        if (f.endsWith('.AppImage')) return 'Linux';
         return 'Unknown';
     };
 
@@ -124,8 +131,8 @@ const Downloads = () => {
         <div className="downloads-page">
             <div className="container downloads-container animate-fade-in">
                 <div className="downloads-header text-center">
-                    <h1 className="hero-title">Download <span className="text-gradient">UW-Agent</span></h1>
-                    <p className="hero-subtitle">Get the latest version of the unified workspace agent.</p>
+                    <h1 className="hero-title">Download <span className="text-gradient">UnderWrite</span></h1>
+                    <p className="hero-subtitle">Get the latest version of the business continuity agent.</p>
                 </div>
 
                 {latestRelease && (
@@ -133,7 +140,7 @@ const Downloads = () => {
                         <div className="latest-badge">Latest Release</div>
                         <div className="latest-content">
                             <div className="latest-info">
-                                <h2>{latestRelease.name}</h2>
+                                <h2>{displayName(latestRelease.name)}</h2>
                                 <div className="meta-info">
                                     <span><Calendar size={16} /> {formatDate(latestRelease.timeCreated)}</span>
                                     <span><HardDrive size={16} /> {formatSize(latestRelease.size)}</span>
@@ -141,7 +148,7 @@ const Downloads = () => {
                                 </div>
                             </div>
                             <div className="latest-action">
-                                <a href={`https://storage.googleapis.com/uw-agent-releases-belt/${encodeURIComponent(latestRelease.name)}`} className="btn btn-primary hover-lift btn-lg">
+                                <a href={`https://storage.googleapis.com/${BUCKET}/${encodeURIComponent(latestRelease.name)}`} className="btn btn-primary hover-lift btn-lg">
                                     <Download size={20} className="mr-2" />
                                     Download Latest
                                 </a>
@@ -157,7 +164,7 @@ const Downloads = () => {
                             {previousReleases.map((release) => (
                                 <div key={release.id} className="release-item">
                                     <div className="release-file">
-                                        <h4>{release.name}</h4>
+                                        <h4>{displayName(release.name)}</h4>
                                         <div className="meta-info text-sm">
                                             <span>{formatDate(release.timeCreated)}</span>
                                             <span className="dot-separator">•</span>
@@ -167,7 +174,7 @@ const Downloads = () => {
                                         </div>
                                     </div>
                                     <a
-                                        href={`https://storage.googleapis.com/uw-agent-releases-belt/${encodeURIComponent(release.name)}`}
+                                        href={`https://storage.googleapis.com/${BUCKET}/${encodeURIComponent(release.name)}`}
                                         className="btn btn-secondary btn-sm rounded-btn"
                                         title="Download"
                                     >
