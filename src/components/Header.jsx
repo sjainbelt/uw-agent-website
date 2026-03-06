@@ -6,7 +6,7 @@ const Header = () => {
     <header className="header glass-panel">
       <div className="container header-content">
         <Link to="/" className="logo">
-          <img src="/logo.png" alt="UW-Agent Logo" className="logo-icon" style={{ height: '60px', width: 'auto' }} />
+          <img src="/logo-light.svg" alt="UW-Agent Logo" className="logo-icon" style={{ height: '60px', width: 'auto' }} />
         </Link>
         <nav className="nav-links">
           <Link to="/pricing" className="nav-link hover-lift">Pricing</Link>

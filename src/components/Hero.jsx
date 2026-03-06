@@ -34,7 +34,7 @@ const Hero = () => {
 
                 <div className="hero-visual delay-300">
                     <div className="mockup-container glass-panel">
-                        <img src="/hero-mockup.png" alt="UnderWrite Dashboard" className="mockup-image" />
+                        <img src="/hero-screenshot.png" alt="UnderWrite Dashboard" className="mockup-image" />
                     </div>
                 </div>            </div>
         </section>

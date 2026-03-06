@@ -43,6 +43,7 @@ const Pricing = () => {
 
     const [catalogByInterval, setCatalogByInterval] = useState({ month: null, year: null });
     const [apiStatus, setApiStatus] = useState('loading'); // 'loading' | 'success' | 'error'
+    const [apiError, setApiError] = useState('');
 
     useEffect(() => {
         let cancelled = false;
@@ -52,7 +53,10 @@ const Pricing = () => {
                 const url = `${checkoutApiBase}/api/apps/underwrite/pricing?plan_code=${encodeURIComponent(planCode)}`;
                 const res = await fetch(url);
                 if (!res.ok) {
-                    if (!cancelled) setApiStatus('error');
+                    if (!cancelled) {
+                        setApiStatus('error');
+                        setApiError(`HTTP Error: ${res.status}`);
+                    }
                     return;
                 }
                 const body = await res.json();
@@ -60,19 +64,29 @@ const Pricing = () => {
 
                 const byInterval = { month: null, year: null };
                 for (const p of prices) {
-                    // Only recognize a price if it has a real Stripe price_id
-                    if ((p?.interval === 'month' || p?.interval === 'year') && p?.price_id?.startsWith('price_')) {
+                    // Accept any valid price (Stripe or custom fallback)
+                    if ((p?.interval === 'month' || p?.interval === 'year') && p?.price_id) {
                         byInterval[p.interval] = p;
                     }
                 }
+
                 if (!cancelled) {
-                    setCatalogByInterval(byInterval);
-                    setApiStatus('success');
+                    if (byInterval.month || byInterval.year) {
+                        setCatalogByInterval(byInterval);
+                        setApiStatus('success');
+                    } else {
+                        // Empty prices should fall back to standard empty state
+                        setApiStatus('error');
+                        setApiError('No valid intervals found in API response');
+                    }
                 }
             } catch (err) {
                 // Keep static fallback pricing when API is unavailable.
                 console.warn('Failed to fetch pricing catalog', err);
-                if (!cancelled) setApiStatus('error');
+                if (!cancelled) {
+                    setApiStatus('error');
+                    setApiError(err.message || 'fetch failed');
+                }
             }
         };
 
@@ -98,17 +112,15 @@ const Pricing = () => {
     const monthlyPrice = catalogByInterval.month;
     const yearlyPrice = catalogByInterval.year;
 
-    const monthlyUnit = monthlyPrice?.unit_amount ? monthlyPrice.unit_amount / 100 : 0;
+    const monthlyUnit = monthlyPrice?.unit_amount ? monthlyPrice.unit_amount / 100 : 10;
     const monthlyDisplay = formatAmount(monthlyUnit);
     const monthlyCurrency = monthlyPrice?.currency || 'usd';
 
-    const yearlyAnnual = yearlyPrice?.unit_amount ? yearlyPrice.unit_amount / 100 : 0;
-    const yearlyPerMonth = yearlyPrice?.unit_amount ? yearlyAnnual / 12 : 0;
+    const yearlyAnnual = yearlyPrice?.unit_amount ? yearlyPrice.unit_amount / 100 : 100;
+    const yearlyPerMonth = yearlyAnnual / 12;
     const yearlyDisplay = formatAmount(yearlyPerMonth);
     const yearlyCurrency = yearlyPrice?.currency || 'usd';
-    const yearlyDesc = yearlyPrice?.unit_amount
-        ? `Billed ${formatCurrencyText(yearlyAnnual, yearlyCurrency)} annually.`
-        : '';
+    const yearlyDesc = `Billed ${formatCurrencyText(yearlyAnnual, yearlyCurrency)} annually.`;
 
     return (
         <section className="pricing-page">
@@ -129,6 +141,7 @@ const Pricing = () => {
                         <div className="card-panel empty-state" style={{ width: '100%', textAlign: 'center', padding: '4rem 2rem' }}>
                             <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Pricing Unavailable</h3>
                             <p style={{ color: 'var(--text-secondary)' }}>Pricing details for this application are currently being configured. Please check back later.</p>
+                            <p style={{ color: 'red', marginTop: '1rem', fontSize: '1rem', opacity: 0.8 }}>Debug info: {apiError}</p>
                         </div>
                     )}
 
