@@ -1,9 +1,8 @@
-import { Check } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Check, Download } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
+import { useLatestRelease, osLabel } from '../hooks/useLatestRelease';
+import { useSearchParams, Link } from 'react-router-dom';
 import './Pricing.css';
-
-
 
 const formatAmount = (value) => {
     if (value == null || Number.isNaN(value)) return null;
@@ -27,100 +26,126 @@ const formatCurrencyText = (amount, currency) => {
 };
 
 const Pricing = () => {
+    const { os, downloadUrl, isLoading } = useLatestRelease();
+    const label = osLabel(os);
+
+    const handleDownload = () => {
+        if (downloadUrl) {
+            window.location.href = downloadUrl;
+        }
+    };
+
     const [searchParams] = useSearchParams();
     const mode = searchParams.get('mode'); // 'upgrade' or null
     const intent = searchParams.get('intent'); // short-lived checkout intent (preferred)
     const token = searchParams.get('token'); // device JWT for authenticated checkout
     const apiBaseParam = searchParams.get('api_base'); // URL from desktop app (ops.belt.ai or ops.beltdev.com)
-    const planCode = (searchParams.get('plan_code') || 'pro').trim().toLowerCase();
+    // planCode parameter restricts the backend query to just one plan, but it now defaults empty so we fetch all
+    const planCode = searchParams.get('plan_code') ? searchParams.get('plan_code').trim().toLowerCase() : '';
 
-    // The gateway URL that handles checkout-redirect for the appropriate environment
     let checkoutApiBase = import.meta.env.VITE_CHECKOUT_API_BASE || 'https://ops.belt.ai';
     if (apiBaseParam) {
-        // Drop any trailing slash just in case
         checkoutApiBase = apiBaseParam.replace(/\/$/, '');
     }
 
-    const [catalogByInterval, setCatalogByInterval] = useState({ month: null, year: null });
+    const [apiPrices, setApiPrices] = useState([]);
     const [apiStatus, setApiStatus] = useState('loading'); // 'loading' | 'success' | 'error'
-    const [apiError, setApiError] = useState('');
+    const [billingInterval, setBillingInterval] = useState('year'); // default toggle
 
     useEffect(() => {
         let cancelled = false;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
 
         const loadPricing = async () => {
             try {
-                const url = `${checkoutApiBase}/api/apps/underwrite/pricing?plan_code=${encodeURIComponent(planCode)}`;
-                const res = await fetch(url);
+                const urlObj = new URL(`${checkoutApiBase}/api/apps/underwrite/agent/pricing`);
+                if (planCode) {
+                    urlObj.searchParams.set('plan_code', planCode);
+                }
+                const res = await fetch(urlObj.toString(), { signal: controller.signal });
                 if (!res.ok) {
-                    if (!cancelled) {
-                        setApiStatus('error');
-                        setApiError(`HTTP Error: ${res.status}`);
-                    }
+                    if (!cancelled) setApiStatus('error');
                     return;
                 }
                 const body = await res.json();
-                const prices = Array.isArray(body?.prices) ? body.prices : [];
-
-                const byInterval = { month: null, year: null };
-                for (const p of prices) {
-                    // Accept any valid price (Stripe or custom fallback)
-                    if ((p?.interval === 'month' || p?.interval === 'year') && p?.price_id) {
-                        byInterval[p.interval] = p;
-                    }
-                }
+                const fetchedPrices = Array.isArray(body?.prices) ? body.prices : [];
 
                 if (!cancelled) {
-                    if (byInterval.month || byInterval.year) {
-                        setCatalogByInterval(byInterval);
-                        setApiStatus('success');
-                    } else {
-                        // Empty prices should fall back to standard empty state
-                        setApiStatus('error');
-                        setApiError('No valid intervals found in API response');
-                    }
+                    // Underwrite handler can return any valid price array
+                    setApiPrices(fetchedPrices);
+                    // It's a success if we get an array back (even empty if no pricing is configured)
+                    setApiStatus('success'); 
                 }
             } catch (err) {
-                // Keep static fallback pricing when API is unavailable.
                 console.warn('Failed to fetch pricing catalog', err);
-                if (!cancelled) {
-                    setApiStatus('error');
-                    setApiError(err.message || 'fetch failed');
-                }
+                if (!cancelled) setApiStatus('error');
             }
         };
 
         loadPricing();
         return () => {
             cancelled = true;
+            clearTimeout(timeoutId);
+            controller.abort();
         };
     }, [checkoutApiBase, planCode]);
 
     const isUpgradeMode = mode === 'upgrade' && (intent || token);
 
-    // Build the checkout redirect URL for a given interval
-    const getCheckoutUrl = (interval) => {
-        const authParam = intent
-            ? `intent=${encodeURIComponent(intent)}`
-            : `token=${encodeURIComponent(token)}`;
-        return `${checkoutApiBase}/api/apps/underwrite/agent/subscription/checkout-redirect?interval=${interval}&plan_code=${encodeURIComponent(planCode)}&${authParam}`;
-    };
+    // Group prices by plan_code
+    const plans = useMemo(() => {
+        const grouped = {};
+        for (const p of apiPrices) {
+            if (!grouped[p.plan_code]) {
+                grouped[p.plan_code] = {
+                    planCode: p.plan_code,
+                    name: p.name || (p.plan_code.charAt(0).toUpperCase() + p.plan_code.slice(1)),
+                    description: p.description || 'Enterprise-grade business continuity for your document management, with no hidden fees.',
+                    options: []
+                };
+            }
+            grouped[p.plan_code].options.push(p);
+        }
+        
+        // Convert to array and sort.
+        const arr = Object.values(grouped);
+        const orderWeight = (code) => {
+            if (code === 'free' || code === 'basic') return 0;
+            if (code === 'starter') return 1;
+            if (code === 'pro' || code === 'standard') return 2;
+            if (code === 'premium' || code === 'advanced') return 3;
+            if (code === 'enterprise') return 4;
+            return 99;
+        };
+        arr.sort((a, b) => orderWeight(a.planCode) - orderWeight(b.planCode));
+        return arr;
+    }, [apiPrices]);
 
-    // Trial sign-up URL (default mode)
-    const trialUrl = 'https://app.belt.ai/tenant-user/signup?app=underwrite';
+    // Fallback plans arrays if API fails or hasn't loaded
+    const fallbackPlans = [
+        {
+            planCode: 'pro',
+            name: 'Pro',
+            description: 'Enterprise-grade business continuity for your document management, with no hidden fees.',
+            options: [
+                {
+                    interval: 'month',
+                    currency: 'usd',
+                    unit_amount: 1000, // $10.00 fallback
+                    features: ['iManage, NetDocuments, Box & SharePoint', 'Automatic continuous document sync', 'Instant outage access and downloads', 'Support for Mac & Windows']
+                },
+                {
+                    interval: 'year',
+                    currency: 'usd',
+                    unit_amount: 10000, // $100.00 fallback
+                    features: ['All Monthly features', 'Priority support', 'Centralized admin controls', 'Custom continuity policy configuration']
+                }
+            ]
+        }
+    ];
 
-    const monthlyPrice = catalogByInterval.month;
-    const yearlyPrice = catalogByInterval.year;
-
-    const monthlyUnit = monthlyPrice?.unit_amount ? monthlyPrice.unit_amount / 100 : 10;
-    const monthlyDisplay = formatAmount(monthlyUnit);
-    const monthlyCurrency = monthlyPrice?.currency || 'usd';
-
-    const yearlyAnnual = yearlyPrice?.unit_amount ? yearlyPrice.unit_amount / 100 : 100;
-    const yearlyPerMonth = yearlyAnnual / 12;
-    const yearlyDisplay = formatAmount(yearlyPerMonth);
-    const yearlyCurrency = yearlyPrice?.currency || 'usd';
-    const yearlyDesc = `Billed ${formatCurrencyText(yearlyAnnual, yearlyCurrency)} annually.`;
+    const displayPlans = apiStatus === 'success' && plans.length > 0 ? plans : fallbackPlans;
 
     return (
         <section className="pricing-page">
@@ -134,67 +159,130 @@ const Pricing = () => {
                             ? 'Select a plan below to complete your upgrade and unlock full access.'
                             : 'Enterprise-grade business continuity for your document management, with no hidden fees.'}
                     </p>
+                    
+                    {/* Interval Toggle */}
+                    <div className="pricing-toggle-container" style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem', marginBottom: '3rem' }}>
+                        <div className="pricing-toggle" style={{ display: 'flex', background: 'var(--bg-card-panel)', borderRadius: '30px', padding: '4px', border: '1px solid var(--border-color)'}}>
+                            <button 
+                                className={`toggle-btn ${billingInterval === 'month' ? 'active' : ''}`}
+                                onClick={() => setBillingInterval('month')}
+                                style={{
+                                    padding: '8px 24px', 
+                                    borderRadius: '24px', 
+                                    border: 'none', 
+                                    background: billingInterval === 'month' ? 'var(--primary-color)' : 'transparent',
+                                    color: billingInterval === 'month' ? 'white' : 'var(--text-secondary)',
+                                    fontWeight: '500',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease'
+                                }}
+                            >
+                                Monthly
+                            </button>
+                            <button 
+                                className={`toggle-btn ${billingInterval === 'year' ? 'active' : ''}`}
+                                onClick={() => setBillingInterval('year')}
+                                style={{
+                                    padding: '8px 24px', 
+                                    borderRadius: '24px', 
+                                    border: 'none', 
+                                    background: billingInterval === 'year' ? 'var(--primary-color)' : 'transparent',
+                                    color: billingInterval === 'year' ? 'white' : 'var(--text-secondary)',
+                                    fontWeight: '500',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px'
+                                }}
+                            >
+                                Yearly <span style={{fontSize: '0.75rem', background: billingInterval === 'year' ? 'rgba(255,255,255,0.2)' : 'var(--primary-color)', color: 'white', padding: '2px 8px', borderRadius: '12px'}}>Save ~16%</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="pricing-cards">
-                    {apiStatus === 'error' && (
-                        <div className="card-panel empty-state" style={{ width: '100%', textAlign: 'center', padding: '4rem 2rem' }}>
-                            <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Pricing Unavailable</h3>
-                            <p style={{ color: 'var(--text-secondary)' }}>Pricing details for this application are currently being configured. Please check back later.</p>
-                            <p style={{ color: 'red', marginTop: '1rem', fontSize: '1rem', opacity: 0.8 }}>Debug info: {apiError}</p>
-                        </div>
-                    )}
+                    {displayPlans.map((plan, idx) => {
+                        // Find price for the selected interval, or fallback to whatever they map
+                        let activeOption = plan.options.find(o => o.interval === billingInterval);
+                        if (!activeOption && plan.options.length > 0) {
+                            activeOption = plan.options[0]; // fallback if the plan doesn't have the selected interval
+                        }
+                        
+                        if (!activeOption) return null;
 
-                    {apiStatus === 'success' && catalogByInterval.month && (
-                        <div className="card-panel pricing-card hover-lift delay-100">
-                            <h3 className="pricing-tier">Monthly</h3>
-                            <div className="pricing-price">
-                                <span className="currency">{currencySymbol(monthlyCurrency)}</span>
-                                <span className="amount">{monthlyDisplay}</span>
-                                <span className="period">/ user / month</span>
-                            </div>
-                            <p className="pricing-desc">Billed monthly. Cancel anytime.</p>
-                            <a
-                                href={isUpgradeMode ? getCheckoutUrl('month') : trialUrl}
-                                className="btn btn-secondary btn-full"
-                                style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}
-                            >
-                                {isUpgradeMode ? 'Subscribe Monthly' : 'Start 14-day free trial'}
-                            </a>
-                            <ul className="pricing-features">
-                                <li><Check size={18} className="feature-check" /> iManage, NetDocuments, Box & SharePoint</li>
-                                <li><Check size={18} className="feature-check" /> Automatic continuous document sync</li>
-                                <li><Check size={18} className="feature-check" /> Instant outage access and downloads</li>
-                                <li><Check size={18} className="feature-check" /> Support for Mac & Windows</li>
-                            </ul>
-                        </div>
-                    )}
+                        const isYearly = activeOption.interval === 'year';
+                        const currency = activeOption.currency || 'usd';
+                        
+                        let monthlyEquivalentAmount = null;
+                        let annualAmountString = '';
 
-                    {apiStatus === 'success' && catalogByInterval.year && (
-                        <div className="card-panel pricing-card popular hover-lift delay-200">
-                            <div className="popular-badge">Most Popular</div>
-                            <h3 className="pricing-tier">Yearly</h3>
-                            <div className="pricing-price">
-                                <span className="currency">{currencySymbol(yearlyCurrency)}</span>
-                                <span className="amount">{yearlyDisplay}</span>
-                                <span className="period">/ user / month</span>
+                        if (isYearly && activeOption.unit_amount) {
+                            const annualVal = activeOption.unit_amount / 100;
+                            monthlyEquivalentAmount = formatAmount(annualVal / 12);
+                            annualAmountString = `Billed ${formatCurrencyText(annualVal, currency)} annually.`;
+                        } else if (!isYearly && activeOption.unit_amount) {
+                            monthlyEquivalentAmount = formatAmount(activeOption.unit_amount / 100);
+                        }
+
+                        // Determine features either from Stripe marketing features or hardcoded fallback
+                        let featuresList = activeOption.features || [];
+                        if (featuresList.length === 0) {
+                            if (isYearly) {
+                                featuresList = ['All Monthly features', 'Priority support', 'Centralized admin controls', 'Custom continuity policy configuration'];
+                            } else {
+                                featuresList = ['iManage, NetDocuments, Box & SharePoint', 'Automatic continuous document sync', 'Instant outage access and downloads', 'Support for Mac & Windows'];
+                            }
+                        }
+
+                        const isPopular = plan.planCode === 'pro' && isYearly;
+
+                        return (
+                            <div key={`${plan.planCode}-${idx}`} className={`card-panel pricing-card hover-lift delay-${(idx+1)*100} ${isPopular ? 'popular' : ''}`}>
+                                {isPopular && <div className="popular-badge">Most Popular</div>}
+                                <h3 className="pricing-tier">{plan.name}</h3>
+                                <p className="pricing-desc" style={{minHeight: '40px', fontSize: '0.9rem', marginBottom: '1.5rem'}}>{plan.description}</p>
+                                
+                                <div className="pricing-price">
+                                    <span className="currency">{currencySymbol(currency)}</span>
+                                    <span className="amount">{monthlyEquivalentAmount || '0'}</span>
+                                    <span className="period">/ user / month</span>
+                                </div>
+                                
+                                <p className="pricing-desc" style={{minHeight: '24px'}}>
+                                    {isYearly ? annualAmountString : 'Billed monthly. Cancel anytime.'}
+                                </p>
+                                
+                                {downloadUrl ? (
+                                    <button
+                                        className={`btn ${isPopular ? 'btn-primary' : 'btn-secondary'} btn-full`}
+                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                        onClick={handleDownload}
+                                        disabled={isLoading}
+                                    >
+                                        <Download size={18} className="mr-2" style={{ marginRight: '8px' }} />
+                                        Download for {label}
+                                    </button>
+                                ) : (
+                                    <Link
+                                        to="/download"
+                                        className={`btn ${isPopular ? 'btn-primary' : 'btn-secondary'} btn-full`}
+                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+                                    >
+                                        <Download size={18} className="mr-2" style={{ marginRight: '8px' }} />
+                                        Download
+                                    </Link>
+                                )}
+                                
+                                <ul className="pricing-features">
+                                    {featuresList.map((f, fIdx) => (
+                                        <li key={fIdx}><Check size={18} className="feature-check" /> {f}</li>
+                                    ))}
+                                </ul>
                             </div>
-                            <p className="pricing-desc">{yearlyDesc}</p>
-                            <a
-                                href={isUpgradeMode ? getCheckoutUrl('year') : trialUrl}
-                                className="btn btn-primary btn-full"
-                                style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}
-                            >
-                                {isUpgradeMode ? 'Subscribe Yearly' : 'Start 14-day free trial'}
-                            </a>
-                            <ul className="pricing-features">
-                                <li><Check size={18} className="feature-check" /> All Monthly features</li>
-                                <li><Check size={18} className="feature-check" /> Priority support</li>
-                                <li><Check size={18} className="feature-check" /> Centralized admin controls</li>
-                                <li><Check size={18} className="feature-check" /> Custom continuity policy configuration</li>
-                            </ul>
-                        </div>
-                    )}
+                        );
+                    })}
                 </div>
             </div>
         </section>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Download, Calendar, HardDrive, AlertCircle } from 'lucide-react';
+import ReactGA from 'react-ga4';
 import './Downloads.css';
 
 const BUCKET = 'noodle-releases-belt';
@@ -148,7 +149,17 @@ const Downloads = () => {
                                 </div>
                             </div>
                             <div className="latest-action">
-                                <a href={`https://storage.googleapis.com/${BUCKET}/${encodeURIComponent(latestRelease.name)}`} className="btn btn-primary hover-lift btn-lg">
+                                <a 
+                                    href={`https://storage.googleapis.com/${BUCKET}/${encodeURIComponent(latestRelease.name)}`} 
+                                    className="btn btn-primary hover-lift btn-lg"
+                                    onClick={() => {
+                                        ReactGA.event({
+                                            category: "Engagement",
+                                            action: "Download_App",
+                                            label: `UW_Agent - ${getOsFromFilename(latestRelease.name)}`
+                                        });
+                                    }}
+                                >
                                     <Download size={20} className="mr-2" />
                                     Download Latest
                                 </a>
@@ -177,6 +188,13 @@ const Downloads = () => {
                                         href={`https://storage.googleapis.com/${BUCKET}/${encodeURIComponent(release.name)}`}
                                         className="btn btn-secondary btn-sm rounded-btn"
                                         title="Download"
+                                        onClick={() => {
+                                            ReactGA.event({
+                                                category: "Engagement",
+                                                action: "Download_App_Previous",
+                                                label: `UW_Agent - ${getOsFromFilename(release.name)}`
+                                            });
+                                        }}
                                     >
                                         <Download size={16} />
                                     </a>

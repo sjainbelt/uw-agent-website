@@ -11,7 +11,7 @@ const Features = () => {
                     </p>
 
                     <div className="demo-video-container card-panel hover-lift" style={{ maxWidth: '800px', margin: '0 auto 4rem auto', padding: '0', overflow: 'hidden' }}>
-                        <img src="/demo.webp" alt="UnderWrite App Demo" style={{ width: '100%', display: 'block' }} />
+                        <img src="/demo-v4.webp" alt="UnderWrite App Demo" style={{ width: '100%', display: 'block' }} />
                     </div>
                 </div>
 

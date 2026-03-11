@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import ReactGA from 'react-ga4';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import Features from './components/Features';
@@ -6,7 +7,16 @@ import Pricing from './components/Pricing';
 import Downloads from './components/Downloads';
 import CheckoutSuccess from './components/CheckoutSuccess';
 import CheckoutCancel from './components/CheckoutCancel';
+import usePageTracking from './hooks/usePageTracking';
 import './App.css';
+
+// Initialize GA4 with Measurement ID
+ReactGA.initialize("G-357LL62V2B");
+
+const PageTracker = () => {
+  usePageTracking();
+  return null;
+};
 
 const Home = () => (
   <>
@@ -18,6 +28,7 @@ const Home = () => (
 function App() {
   return (
     <Router>
+      <PageTracker />
       <div className="app-wrapper">
         <Header />
         <main>

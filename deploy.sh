@@ -1,18 +1,14 @@
 #!/bin/bash
+set -euo pipefail
 
-# Exit immediately if a command exits with a non-zero status
-set -e
+PROJECT_ID=${PROJECT_ID:-belt-prod-us}
+BUCKET=${BUCKET:-uw-agent-website}
+DIST_DIR=${DIST_DIR:-dist}
 
-echo "Building the project..."
 npm run build
 
-echo "Setting GCP project to belt-prod-us..."
-gcloud config set project belt-prod-us
+gcloud config set project "$PROJECT_ID"
+gcloud storage rsync -R "$DIST_DIR/" "gs://$BUCKET/"
+gcloud storage objects update "gs://$BUCKET/index.html" --cache-control="no-cache, max-age=0"
 
-echo "Deploying dist/ to gs://uw-agent-website..."
-gcloud storage rsync -R dist/ gs://uw-agent-website/
-
-echo "Setting cache-control for index.html..."
-gcloud storage objects update gs://uw-agent-website/index.html --cache-control="no-cache, max-age=0"
-
-echo "Deployment successful!"
+echo "Deployment successful: gs://$BUCKET"
