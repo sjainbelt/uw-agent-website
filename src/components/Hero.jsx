@@ -4,6 +4,7 @@ import { Download } from 'lucide-react';
 import { useLatestRelease, osLabel } from '../hooks/useLatestRelease';
 import PostDownloadSteps from './PostDownloadSteps';
 import ReactGA from 'react-ga4';
+import { trackEvent } from '../analytics/posthog';
 import './Hero.css';
 
 const Hero = () => {
@@ -17,6 +18,7 @@ const Hero = () => {
                 action: "Download_App",
                 label: `UW_Agent - ${label}`
             });
+            trackEvent("download_clicked", { app: "uw-agent", os: label, source: "hero" });
             window.location.href = downloadUrl;
             setDownloadStarted(true);
         }

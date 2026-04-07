@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Download, Calendar, HardDrive, AlertCircle } from 'lucide-react';
 import ReactGA from 'react-ga4';
+import { trackEvent } from '../analytics/posthog';
 import './Downloads.css';
 
 const BUCKET = 'noodle-releases-belt';
@@ -158,6 +159,7 @@ const Downloads = () => {
                                             action: "Download_App",
                                             label: `UW_Agent - ${getOsFromFilename(latestRelease.name)}`
                                         });
+                                        trackEvent("download_clicked", { app: "uw-agent", os: getOsFromFilename(latestRelease.name), source: "downloads_latest" });
                                     }}
                                 >
                                     <Download size={20} className="mr-2" />
@@ -194,6 +196,7 @@ const Downloads = () => {
                                                 action: "Download_App_Previous",
                                                 label: `UW_Agent - ${getOsFromFilename(release.name)}`
                                             });
+                                            trackEvent("download_clicked", { app: "uw-agent", os: getOsFromFilename(release.name), source: "downloads_previous" });
                                         }}
                                     >
                                         <Download size={16} />
