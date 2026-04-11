@@ -9,6 +9,9 @@ import Privacy from './components/Privacy';
 import Terms from './components/Terms';
 import CheckoutSuccess from './components/CheckoutSuccess';
 import CheckoutCancel from './components/CheckoutCancel';
+import HowItWorks from './components/HowItWorks';
+import Security from './components/Security';
+import Integrations from './components/Integrations';
 import usePageTracking from './hooks/usePageTracking';
 import { initPostHog } from './analytics/posthog';
 import CookieConsent from './components/CookieConsent';
@@ -43,6 +46,9 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/download" element={<Downloads />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
+            <Route path="/security" element={<Security />} />
+            <Route path="/integrations" element={<Integrations />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/checkout/success" element={<CheckoutSuccess />} />
@@ -51,12 +57,32 @@ function App() {
         </main>
 
         <footer className="footer">
-          <div className="container footer-content">
-            <p className="copyright">© {new Date().getFullYear()} Belt Software Inc. All rights reserved.</p>
-            <div className="footer-links">
-              <Link to="/privacy">Privacy</Link>
-              <Link to="/terms">Terms</Link>
-              <a href="https://belt.ai/contact">Contact</a>
+          <div className="container">
+            <div className="footer-top">
+              <div className="footer-brand">UnderWrite</div>
+              <div className="footer-links">
+                <Link to="/privacy">Privacy Policy</Link>
+                <Link to="/terms">Terms of Service</Link>
+                <Link to="/security">Security</Link>
+                <a href="https://belt.ai/contact">Contact</a>
+              </div>
+            </div>
+            <div className="footer-bottom">
+              <p className="copyright">© {new Date().getFullYear()} Belt Software Inc. All rights reserved.</p>
+              <div className="footer-meta">
+                <div className="belt-products">
+                  <span className="belt-label">Belt</span>
+                  <span className="belt-divider">|</span>
+                  <a href="https://noodle.belt.ai">Noodle</a>
+                  <a href="https://underwrite.belt.ai">UnderWrite</a>
+                  <a href="https://ensefa.belt.ai">Ensefa</a>
+                </div>
+                <span className="meta-divider">|</span>
+                <div className="soc2-badge">
+                  <span className="material-symbols-outlined">verified_user</span>
+                  <span>SOC 2 TYPE II</span>
+                </div>
+              </div>
             </div>
           </div>
         </footer>
