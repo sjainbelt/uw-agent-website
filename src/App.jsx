@@ -1,7 +1,9 @@
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import ReactGA from 'react-ga4';
+import { useState } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
+import DemoSection from './components/DemoSection';
 import Features from './components/Features';
 import Pricing from './components/Pricing';
 import Downloads from './components/Downloads';
@@ -15,6 +17,7 @@ import Integrations from './components/Integrations';
 import usePageTracking from './hooks/usePageTracking';
 import { initPostHog } from './analytics/posthog';
 import CookieConsent from './components/CookieConsent';
+import ContactModal from './components/ContactModal';
 import './App.css';
 
 // Initialize GA4 (kept for Google Ads / Search Console integration)
@@ -31,30 +34,45 @@ const PageTracker = () => {
 const Home = () => (
   <>
     <Hero />
+    <DemoSection />
     <Features />
   </>
 );
 
 function App() {
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState("Get in Touch");
+
+  const openContactModal = (title) => {
+    if (title) setModalTitle(title);
+    setIsContactModalOpen(true);
+  };
+
   return (
     <Router>
       <PageTracker />
       <div className="app-wrapper">
-        <Header />
+        <Header openContactModal={openContactModal} />
         <main>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/download" element={<Downloads />} />
-            <Route path="/how-it-works" element={<HowItWorks />} />
-            <Route path="/security" element={<Security />} />
-            <Route path="/integrations" element={<Integrations />} />
+            <Route path="/how-it-works" element={<HowItWorks openContactModal={openContactModal} />} />
+            <Route path="/security" element={<Security openContactModal={openContactModal} />} />
+            <Route path="/integrations" element={<Integrations openContactModal={openContactModal} />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/checkout/success" element={<CheckoutSuccess />} />
             <Route path="/checkout/cancel" element={<CheckoutCancel />} />
           </Routes>
         </main>
+
+        <ContactModal 
+          isOpen={isContactModalOpen} 
+          onClose={() => setIsContactModalOpen(false)} 
+          title={modalTitle}
+        />
 
         <footer className="footer">
           <div className="container">

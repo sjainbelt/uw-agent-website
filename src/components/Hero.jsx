@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Download } from 'lucide-react';
 import { useLatestRelease, osLabel } from '../hooks/useLatestRelease';
 import PostDownloadSteps from './PostDownloadSteps';
 import ReactGA from 'react-ga4';
@@ -28,41 +27,43 @@ const Hero = () => {
 
     return (
         <section className="hero">
-            <div className="container hero-container animate-fade-in">
+            <div className="hero-grid animate-fade-in">
                 <div className="hero-content">
-                    <div className="badge delay-100">
-                        <span className="badge-dot"></span>
-                        Business Continuity Solution
+                    <div className="hero-badge delay-100">
+                        <span className="hero-pulse-dot"></span>
+                        <span className="hero-badge-text">Archival Sentinel Active</span>
                     </div>
 
                     <h1 className="hero-title delay-200">
-                        Instant document <span className="text-gradient">Business Continuity.</span>
+                        Instant Business Continuity.<br/>
+                        <span className="text-gradient">Zero Work Interruptions.</span>
                     </h1>
 
                     <p className="hero-subtitle delay-300">
-                        Ensure business continuity for critical documents from iManage, NetDocuments, Box, and SharePoint. Access and download your synced files anytime — even during an outage.
+                        Hedge against public cloud outages (Azure, AWS) by automatically syncing your critical documents from iManage, NetDocuments, Box, and OneDrive to a secure, independent cloud.
                     </p>
 
                     <div className="hero-actions delay-300">
                         {downloadUrl ? (
                             <button
-                                className="btn btn-primary hover-lift btn-lg"
+                                className="btn signature-gradient btn-lg"
                                 onClick={handleDownload}
                                 disabled={isLoading}
                             >
-                                <Download size={20} className="mr-2" />
+                                <span className="material-symbols-outlined mr-2">download</span>
                                 Download for {label}
                             </button>
                         ) : (
-                            <Link to="/download" className="btn btn-primary hover-lift btn-lg">
-                                <Download size={20} className="mr-2" />
+                            <Link to="/download" className="btn signature-gradient btn-lg">
+                                <span className="material-symbols-outlined mr-2">download</span>
                                 Download
                             </Link>
                         )}
 
-                        <Link to="/download" className="btn btn-secondary hover-lift btn-lg">
-                            View Pricing
-                        </Link>
+                        <a href="#demo" className="btn btn-outline btn-lg">
+                            <span className="material-symbols-outlined mr-2">play_circle</span>
+                            Watch Demo
+                        </a>
                     </div>
 
                     {!downloadStarted && (
@@ -92,8 +93,35 @@ const Hero = () => {
 
                 {!downloadStarted && (
                     <div className="hero-visual delay-300">
-                        <div className="mockup-container glass-panel">
-                            <img src="/hero-screenshot.png" alt="UnderWrite Dashboard" className="mockup-image" />
+                        <div className="visual-container">
+                            <img src="/images/hero-network.jpg" alt="Network infrastructure" className="visual-image" />
+                            <div className="visual-overlay">
+                                <div className="visual-card">
+                                    <div className="visual-card-header">
+                                        <div className="visual-card-info">
+                                            <div className="visual-card-icon-wrapper">
+                                                <span className="material-symbols-outlined visual-card-icon">cloud_sync</span>
+                                            </div>
+                                            <div>
+                                                <div className="visual-card-title">Real-time Hedge</div>
+                                                <div className="visual-card-subtitle">Syncing 4,821 items</div>
+                                            </div>
+                                        </div>
+                                        <span className="visual-card-stat">99.99%</span>
+                                    </div>
+                                    <div className="visual-card-body">
+                                        <div className="progress-track">
+                                            <div className="progress-fill"></div>
+                                        </div>
+                                        <div className="progress-segments">
+                                            <div className="progress-segment"></div>
+                                            <div className="progress-segment"></div>
+                                            <div className="progress-segment"></div>
+                                            <div className="progress-segment-empty"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}

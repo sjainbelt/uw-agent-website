@@ -1,4 +1,3 @@
-import { Check, Download } from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
 import { useLatestRelease, osLabel } from '../hooks/useLatestRelease';
 import { useSearchParams, Link } from 'react-router-dom';
@@ -39,8 +38,7 @@ const Pricing = () => {
     const mode = searchParams.get('mode'); // 'upgrade' or null
     const intent = searchParams.get('intent'); // short-lived checkout intent (preferred)
     const token = searchParams.get('token'); // device JWT for authenticated checkout
-    const apiBaseParam = searchParams.get('api_base'); // URL from desktop app (ops.belt.ai or ops.beltdev.com)
-    // planCode parameter restricts the backend query to just one plan, but it now defaults empty so we fetch all
+    const apiBaseParam = searchParams.get('api_base'); 
     const planCode = searchParams.get('plan_code') ? searchParams.get('plan_code').trim().toLowerCase() : '';
 
     let checkoutApiBase = import.meta.env.VITE_CHECKOUT_API_BASE || 'https://ops.belt.ai';
@@ -49,13 +47,13 @@ const Pricing = () => {
     }
 
     const [apiPrices, setApiPrices] = useState([]);
-    const [apiStatus, setApiStatus] = useState('loading'); // 'loading' | 'success' | 'error'
-    const [billingInterval, setBillingInterval] = useState('year'); // default toggle
+    const [apiStatus, setApiStatus] = useState('loading'); 
+    const [billingInterval, setBillingInterval] = useState('year'); 
 
     useEffect(() => {
         let cancelled = false;
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
 
         const loadPricing = async () => {
             try {
@@ -72,9 +70,7 @@ const Pricing = () => {
                 const fetchedPrices = Array.isArray(body?.prices) ? body.prices : [];
 
                 if (!cancelled) {
-                    // Underwrite handler can return any valid price array
                     setApiPrices(fetchedPrices);
-                    // It's a success if we get an array back (even empty if no pricing is configured)
                     setApiStatus('success'); 
                 }
             } catch (err) {
@@ -93,7 +89,6 @@ const Pricing = () => {
 
     const isUpgradeMode = mode === 'upgrade' && (intent || token);
 
-    // Group prices by plan_code
     const plans = useMemo(() => {
         const grouped = {};
         for (const p of apiPrices) {
@@ -108,7 +103,6 @@ const Pricing = () => {
             grouped[p.plan_code].options.push(p);
         }
         
-        // Convert to array and sort.
         const arr = Object.values(grouped);
         const orderWeight = (code) => {
             if (code === 'free' || code === 'basic') return 0;
@@ -122,7 +116,6 @@ const Pricing = () => {
         return arr;
     }, [apiPrices]);
 
-    // Fallback plans arrays if API fails or hasn't loaded
     const fallbackPlans = [
         {
             planCode: 'pro',
@@ -132,13 +125,13 @@ const Pricing = () => {
                 {
                     interval: 'month',
                     currency: 'usd',
-                    unit_amount: 1000, // $10.00 fallback
+                    unit_amount: 1000, 
                     features: ['iManage, NetDocuments, Box & SharePoint', 'Automatic continuous document sync', 'Instant outage access and downloads', 'Support for Mac & Windows']
                 },
                 {
                     interval: 'year',
                     currency: 'usd',
-                    unit_amount: 10000, // $100.00 fallback
+                    unit_amount: 10000, 
                     features: ['All Monthly features', 'Priority support', 'Centralized admin controls', 'Custom continuity policy configuration']
                 }
             ]
@@ -151,52 +144,46 @@ const Pricing = () => {
         <section className="pricing-page">
             <div className="container animate-fade-in">
                 <div className="pricing-header">
-                    <h1 className="section-title">
+                    <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.25rem 0.75rem',
+                        borderRadius: '9999px',
+                        backgroundColor: 'rgba(167, 52, 5, 0.1)',
+                        color: 'var(--primary)',
+                        fontSize: '0.75rem',
+                        fontWeight: '700',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.1em',
+                        marginBottom: '1.5rem'
+                    }}>
+                        <span className="material-symbols-outlined text-sm">payments</span>
+                        Pricing Plans
+                    </span>
+                    <h1 style={{ fontSize: '3.75rem', fontWeight: 900, letterSpacing: '-0.025em', lineHeight: 1.1, marginBottom: '1.5rem' }}>
                         {isUpgradeMode ? 'Choose your plan' : 'Simple, transparent pricing'}
                     </h1>
-                    <p className="section-subtitle">
+                    <p style={{ fontSize: '1.25rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
                         {isUpgradeMode
                             ? 'Select a plan below to complete your upgrade and unlock full access.'
                             : 'Enterprise-grade business continuity for your document management, with no hidden fees.'}
                     </p>
                     
                     {/* Interval Toggle */}
-                    <div className="pricing-toggle-container" style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem', marginBottom: '3rem' }}>
-                        <div className="pricing-toggle" style={{ display: 'flex', background: 'var(--bg-card-panel)', borderRadius: '30px', padding: '4px', border: '1px solid var(--border-color)'}}>
+                    <div className="pricing-toggle-container">
+                        <div className="pricing-toggle">
                             <button 
                                 className={`toggle-btn ${billingInterval === 'month' ? 'active' : ''}`}
                                 onClick={() => setBillingInterval('month')}
-                                style={{
-                                    padding: '8px 24px', 
-                                    borderRadius: '24px', 
-                                    border: 'none', 
-                                    background: billingInterval === 'month' ? 'var(--primary-color)' : 'transparent',
-                                    color: billingInterval === 'month' ? 'white' : 'var(--text-secondary)',
-                                    fontWeight: '500',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s ease'
-                                }}
                             >
                                 Monthly
                             </button>
                             <button 
                                 className={`toggle-btn ${billingInterval === 'year' ? 'active' : ''}`}
                                 onClick={() => setBillingInterval('year')}
-                                style={{
-                                    padding: '8px 24px', 
-                                    borderRadius: '24px', 
-                                    border: 'none', 
-                                    background: billingInterval === 'year' ? 'var(--primary-color)' : 'transparent',
-                                    color: billingInterval === 'year' ? 'white' : 'var(--text-secondary)',
-                                    fontWeight: '500',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s ease',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px'
-                                }}
                             >
-                                Yearly <span style={{fontSize: '0.75rem', background: billingInterval === 'year' ? 'rgba(255,255,255,0.2)' : 'var(--primary-color)', color: 'white', padding: '2px 8px', borderRadius: '12px'}}>Save ~16%</span>
+                                Yearly <span style={{fontSize: '0.625rem', background: billingInterval === 'year' ? 'rgba(255,255,255,0.2)' : 'rgba(167, 52, 5, 0.1)', color: billingInterval === 'year' ? 'white' : 'var(--primary)', padding: '2px 8px', borderRadius: '12px'}}>Save ~16%</span>
                             </button>
                         </div>
                     </div>
@@ -204,10 +191,9 @@ const Pricing = () => {
 
                 <div className="pricing-cards">
                     {displayPlans.map((plan, idx) => {
-                        // Find price for the selected interval, or fallback to whatever they map
                         let activeOption = plan.options.find(o => o.interval === billingInterval);
                         if (!activeOption && plan.options.length > 0) {
-                            activeOption = plan.options[0]; // fallback if the plan doesn't have the selected interval
+                            activeOption = plan.options[0];
                         }
                         
                         if (!activeOption) return null;
@@ -226,7 +212,6 @@ const Pricing = () => {
                             monthlyEquivalentAmount = formatAmount(activeOption.unit_amount / 100);
                         }
 
-                        // Determine features either from Stripe marketing features or hardcoded fallback
                         let featuresList = activeOption.features || [];
                         if (featuresList.length === 0) {
                             if (isYearly) {
@@ -239,10 +224,10 @@ const Pricing = () => {
                         const isPopular = plan.planCode === 'pro' && isYearly;
 
                         return (
-                            <div key={`${plan.planCode}-${idx}`} className={`card-panel pricing-card hover-lift delay-${(idx+1)*100} ${isPopular ? 'popular' : ''}`}>
+                            <div key={`${plan.planCode}-${idx}`} className={`pricing-card hover-lift delay-${(idx+1)*100} ${isPopular ? 'popular' : ''}`}>
                                 {isPopular && <div className="popular-badge">Most Popular</div>}
                                 <h3 className="pricing-tier">{plan.name}</h3>
-                                <p className="pricing-desc" style={{minHeight: '40px', fontSize: '0.9rem', marginBottom: '1.5rem'}}>{plan.description}</p>
+                                <p className="pricing-desc" style={{minHeight: '40px'}}>{plan.description}</p>
                                 
                                 <div className="pricing-price">
                                     <span className="currency">{currencySymbol(currency)}</span>
@@ -256,28 +241,29 @@ const Pricing = () => {
                                 
                                 {downloadUrl ? (
                                     <button
-                                        className={`btn ${isPopular ? 'btn-primary' : 'btn-secondary'} btn-full`}
-                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                        className={isPopular ? 'btn-pricing-primary' : 'btn-pricing-secondary'}
                                         onClick={handleDownload}
                                         disabled={isLoading}
                                     >
-                                        <Download size={18} className="mr-2" style={{ marginRight: '8px' }} />
+                                        <span className="material-symbols-outlined" style={{ marginRight: '8px', fontSize: '18px' }}>download</span>
                                         Download for {label}
                                     </button>
                                 ) : (
                                     <Link
                                         to="/download"
-                                        className={`btn ${isPopular ? 'btn-primary' : 'btn-secondary'} btn-full`}
-                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+                                        className={isPopular ? 'btn-pricing-primary' : 'btn-pricing-secondary'}
                                     >
-                                        <Download size={18} className="mr-2" style={{ marginRight: '8px' }} />
+                                        <span className="material-symbols-outlined" style={{ marginRight: '8px', fontSize: '18px' }}>download</span>
                                         Download
                                     </Link>
                                 )}
                                 
                                 <ul className="pricing-features">
                                     {featuresList.map((f, fIdx) => (
-                                        <li key={fIdx}><Check size={18} className="feature-check" /> {f}</li>
+                                        <li key={fIdx}>
+                                            <span className="material-symbols-outlined feature-check" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span> 
+                                            {f}
+                                        </li>
                                     ))}
                                 </ul>
                             </div>
