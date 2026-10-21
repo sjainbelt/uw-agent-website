@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import { PRODUCT_AVAILABLE } from '../config/features';
+import InterestLink from './InterestLink';
 import './Header.css';
 
 const Header = ({ openContactModal }) => {
@@ -13,15 +15,19 @@ const Header = ({ openContactModal }) => {
           <Link to="/integrations" className="nav-link">Integrations</Link>
           <Link to="/how-it-works" className="nav-link">How it Works</Link>
           <Link to="/security" className="nav-link">Security</Link>
-          <Link to="/pricing" className="nav-link">Pricing</Link>
+          {PRODUCT_AVAILABLE && <Link to="/pricing" className="nav-link">Pricing</Link>}
         </nav>
         <div className="header-actions">
           <button onClick={() => openContactModal("Contact Sales")} className="login-btn nav-btn-reset">
             Contact Sales
           </button>
-          <Link to="/download" className="btn signature-gradient get-started-btn">
-            Get Started
-          </Link>
+          {PRODUCT_AVAILABLE ? (
+            <Link to="/download" className="btn signature-gradient get-started-btn">
+              Get Started
+            </Link>
+          ) : (
+            <InterestLink source="header" className="btn signature-gradient get-started-btn" />
+          )}
         </div>
       </div>
     </header>

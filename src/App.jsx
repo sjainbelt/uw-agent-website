@@ -18,6 +18,8 @@ import usePageTracking from './hooks/usePageTracking';
 import { initPostHog } from './analytics/posthog';
 import CookieConsent from './components/CookieConsent';
 import ContactModal from './components/ContactModal';
+import ProductUnavailable from './components/ProductUnavailable';
+import { PRODUCT_AVAILABLE } from './config/features';
 import './App.css';
 
 // Initialize GA4 (kept for Google Ads / Search Console integration)
@@ -56,8 +58,8 @@ function App() {
         <main>
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/download" element={<Downloads />} />
+            <Route path="/pricing" element={PRODUCT_AVAILABLE ? <Pricing /> : <ProductUnavailable />} />
+            <Route path="/download" element={PRODUCT_AVAILABLE ? <Downloads /> : <ProductUnavailable />} />
             <Route path="/how-it-works" element={<HowItWorks openContactModal={openContactModal} />} />
             <Route path="/security" element={<Security openContactModal={openContactModal} />} />
             <Route path="/integrations" element={<Integrations openContactModal={openContactModal} />} />

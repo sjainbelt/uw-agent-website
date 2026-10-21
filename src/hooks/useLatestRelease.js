@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PRODUCT_AVAILABLE } from '../config/features';
 
 const BUCKET = 'noodle-releases-belt';
 const PREFIX = 'uw-agent/';
@@ -39,13 +40,16 @@ const displayName = (name) => name.startsWith(PREFIX) ? name.slice(PREFIX.length
  */
 export function useLatestRelease() {
     const [os] = useState(detectOS);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(PRODUCT_AVAILABLE);
     const [downloadUrl, setDownloadUrl] = useState(null);
     const [fileName, setFileName] = useState(null);
     const [otherOsLabel, setOtherOsLabel] = useState(null);
     const [otherOsUrl, setOtherOsUrl] = useState(null);
 
     useEffect(() => {
+        // Product is unavailable: never resolve a download URL.
+        if (!PRODUCT_AVAILABLE) return;
+
         let cancelled = false;
 
         const resolve = async () => {
