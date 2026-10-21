@@ -4,6 +4,8 @@ import { useLatestRelease, osLabel } from '../hooks/useLatestRelease';
 import PostDownloadSteps from './PostDownloadSteps';
 import ReactGA from 'react-ga4';
 import { trackEvent } from '../analytics/posthog';
+import { PRODUCT_AVAILABLE } from '../config/features';
+import InterestLink from './InterestLink';
 import './Hero.css';
 
 const Hero = () => {
@@ -44,7 +46,12 @@ const Hero = () => {
                     </p>
 
                     <div className="hero-actions delay-300">
-                        {downloadUrl ? (
+                        {!PRODUCT_AVAILABLE ? (
+                            <InterestLink source="hero" className="btn signature-gradient btn-lg">
+                                <span className="material-symbols-outlined mr-2">notifications</span>
+                                Register Interest
+                            </InterestLink>
+                        ) : downloadUrl ? (
                             <button
                                 className="btn signature-gradient btn-lg"
                                 onClick={handleDownload}
@@ -66,7 +73,13 @@ const Hero = () => {
                         </a>
                     </div>
 
-                    {!downloadStarted && (
+                    {!PRODUCT_AVAILABLE && (
+                        <div className="hero-alt-download delay-300">
+                            <span>UnderWrite isn't available for download right now. Register your interest and we'll be in touch if that changes.</span>
+                        </div>
+                    )}
+
+                    {PRODUCT_AVAILABLE && !downloadStarted && (
                         <div className="hero-alt-download delay-300">
                             {otherOsLabel ? (
                                 <span>

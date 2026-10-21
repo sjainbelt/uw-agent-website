@@ -1,0 +1,49 @@
+.unavailable-page {
+    padding: 8rem 0 6rem;
+    min-height: calc(100vh - 100px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.unavailable-card {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 3.5rem 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.unavailable-icon {
+    font-size: 48px;
+    color: var(--primary);
+}
+
+.unavailable-card h1 {
+    font-size: 2rem;
+}
+
+.unavailable-card p {
+    color: var(--text-muted);
+    max-width: 48ch;
+}
+
+.unavailable-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+@media (max-width: 600px) {
+    .unavailable-card {
+        padding: 2.5rem 1.5rem;
+    }
+
+    .unavailable-actions .btn {
+        width: 100%;
+    }
+}

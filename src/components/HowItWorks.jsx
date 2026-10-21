@@ -2,6 +2,8 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './HowItWorks.css';
 import usePageTracking from '../hooks/usePageTracking';
+import { PRODUCT_AVAILABLE } from '../config/features';
+import InterestLink from './InterestLink';
 
 const HowItWorks = ({ openContactModal }) => {
     // Relying on global usePageTracking for PostHog event logging
@@ -173,7 +175,11 @@ const HowItWorks = ({ openContactModal }) => {
                     Join thousands of enterprises that refuse to let a system failure stop their operations.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Link to="/download" className="btn signature-gradient px-10 py-4 font-bold text-lg shadow-xl hover:scale-95 transition-transform text-center">Get Started Today</Link>
+                    {PRODUCT_AVAILABLE ? (
+                        <Link to="/download" className="btn signature-gradient px-10 py-4 font-bold text-lg shadow-xl hover:scale-95 transition-transform text-center">Get Started Today</Link>
+                    ) : (
+                        <InterestLink source="how_it_works" className="btn signature-gradient px-10 py-4 font-bold text-lg shadow-xl hover:scale-95 transition-transform text-center" />
+                    )}
                     <button onClick={() => openContactModal("Sales Inquiry")} className="btn bg-white border border-outline-variant text-on-surface px-10 py-4 font-bold text-lg hover:bg-surface-container-low transition-colors" style={{ color: 'var(--text-main)', border: '1px solid var(--outline-variant)' }}>Talk to Sales</button>
                 </div>
             </section>
